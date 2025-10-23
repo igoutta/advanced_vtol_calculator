@@ -16,22 +16,20 @@ def _():
 
 @app.cell
 def _():
-    from math import pi, cos, sin, sqrt, radians, degrees
+    from math import cos, degrees, radians, sin, sqrt
     return cos, degrees, radians, sin, sqrt
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""## Degrees Sine Test""")
-    return
+def _():
+    import numpy as np
+    return (np,)
 
 
 @app.cell
-def _(radians, sin):
-    for iota in range(30):
-        print(
-            f"Comparison of {iota}° in radians: {radians(iota):.3f} and {sin(radians(iota)):.3f}"
-        )
+def _():
+    import sympy as sp
+    from sympy import Eq, linsolve, solve, symbols
     return
 
 
@@ -81,63 +79,6 @@ def _(firstT, g, ph, radians, sin, th):
     return
 
 
-@app.cell
-def _(mo):
-    mo.md(r"""## Numpy matrices math test""")
-    return
-
-
-@app.cell
-def _():
-    import numpy as np
-    return (np,)
-
-
-@app.cell
-def _(np):
-    A = np.array([[9, 8, 7]])
-    A.shape
-    return (A,)
-
-
-@app.cell
-def _(A):
-    A.size
-    return
-
-
-@app.cell
-def _(np):
-    B = np.array([[3, 4, 5]]).T
-    B
-    return (B,)
-
-
-@app.cell
-def _(A, B):
-    A @ B
-    return
-
-
-@app.cell
-def _(A, B, np):
-    Momento = np.array([np.ones(A.size), A.squeeze(), B.squeeze()])
-    Momento
-    return
-
-
-@app.cell
-def _(A, B, np):
-    np.linalg.cross(A.squeeze(), B.squeeze())
-    return
-
-
-@app.cell
-def _(B, np):
-    2*np.eye(3)@B
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -172,12 +113,6 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r""" """)
-    return
-
-
-@app.cell
-def _(mo):
     mo.md(
         r"""
     Rotation Matrix around X(roll) and Y(pitch) for radius r : $\vec{R} = \Phi\times\Theta\times\vec{r}$
@@ -187,17 +122,17 @@ def _(mo):
     1 & 0 & 0\\
     0 & \cos(\phi) & -\sin(\phi) \\
     0 & \sin(\phi) & \cos(\phi)
-    \end{pmatrix} 
+    \end{pmatrix}
     \begin{pmatrix}
     \cos(\theta) & 0 & \sin(\theta) \\
     0 & 1 & 0\\
     -\sin(\theta) & 0 & \cos(\theta))
-    \end{pmatrix} 
+    \end{pmatrix}
     \begin{pmatrix}
     r\cos(\alpha)\\
     r\sin(\alpha)\\
     0
-    \end{pmatrix} 
+    \end{pmatrix}
     =
     \begin{pmatrix}
     r\cos(\alpha)\cos(\theta) \\
@@ -207,13 +142,6 @@ def _(mo):
     $$
     """
     )
-    return
-
-
-@app.cell
-def _():
-    import sympy as sp
-    from sympy import symbols, Eq, solve, Matrix, linsolve
     return
 
 
@@ -231,7 +159,7 @@ def _():
     m_ix = 0  # kgf-m
     m_iy = 0  # kgf-m
     m_iz = 0  # kgf-m
-    return
+    return i_x, i_y, i_z
 
 
 @app.cell(hide_code=True)
@@ -241,13 +169,13 @@ def _(mo):
 
 
 @app.cell
-def _(G, input_x, input_y, input_z):
+def _(G, i_x, i_y, i_z):
     # EF(x)
-    T_x = input_x * 9.80665
+    T_x = i_x * 9.80665
     # EF(y)
-    T_y = input_y * 9.80665
+    T_y = i_y * 9.80665
     # EF(z)
-    T_z = G + input_z
+    T_z = G + i_z
     return T_x, T_y, T_z
 
 
@@ -282,16 +210,12 @@ def _(cos, np, radians, sin):
                     r
                     * (
                         sin(radians(alpha)) * cos(radians(phi))
-                        + cos(radians(alpha))
-                        * sin(radians(theta))
-                        * sin(radians(phi))
+                        + cos(radians(alpha)) * sin(radians(theta)) * sin(radians(phi))
                     ),
                     r
                     * (
                         sin(radians(alpha)) * sin(radians(phi))
-                        + cos(radians(alpha))
-                        * sin(radians(theta))
-                        * cos(radians(phi))
+                        + cos(radians(alpha)) * sin(radians(theta)) * cos(radians(phi))
                     ),
                 ]
             ]
