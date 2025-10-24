@@ -10,6 +10,7 @@ dependencies = [
     "plotly[express]>=6.3.1",
     "scipy>=1.16.2",
     "sympy>=1.14.0",
+    "pyzmq>=27.1.0",
 ]
 
 [dependency-groups]
