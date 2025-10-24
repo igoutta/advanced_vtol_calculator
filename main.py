@@ -17,29 +17,26 @@ def _(mo):
 @app.cell
 def _():
     import marimo as mo
-
     return (mo,)
 
 
 @app.cell
 def _():
     from math import radians
-
     return (radians,)
 
 
 @app.cell
 def _():
     import numpy as np
-
     return (np,)
 
 
 @app.cell
 def _():
     import sympy as sp
-    from sympy import Eq, linsolve, sin, sqrt, symbols
-
+    from sympy import Eq, linsolve, solve, symbols
+    from sympy import cos, sin, sqrt
     return Eq, linsolve, sin, sp, sqrt, symbols
 
 
@@ -146,12 +143,12 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    ### Thrust vector
+    ### Thrust vector 
 
     Usually orthogonal to the XY plane, upwards, with rotation given two euler angle, Roll = $\phi$ and Pitch = $\theta$.
 
     $$
-    T_n =
+    T_n = 
     \begin{pmatrix}
     ||T_n||\sin{\theta} \\
     ||T_n||\sin{\phi} \\
@@ -217,23 +214,20 @@ def _(mo):
     pitch = mo.ui.slider(
         start=-90,
         stop=90,
-        step=0.05,
+        step=0.1,
         value=0,
         label="Pitch:",
         debounce=True,
         show_value=True,
         full_width=True,
     )  # degrees
+
     return pitch, roll
 
 
 @app.cell(hide_code=True)
 def _(mo, pitch, roll):
-    mo.hstack(
-        [roll, pitch],
-        justify="center",
-        align="center",
-    )
+    mo.vstack([roll, pitch])
     return
 
 
@@ -283,17 +277,25 @@ def _(i_m_x, i_m_y, i_m_z, i_x, i_y, i_z, m_coeff, m_switch, mo, switch):
 @app.cell(hide_code=True)
 def _(mo):
     # Forces applied location
-    r_x_i = mo.ui.slider(-2, 2, 0.1, 0, label="Fx", show_value=True, full_width=True)
+    r_x_i = mo.ui.slider(
+        -2, 2, 0.1, 0, label="F(x)", show_value=True, full_width=True
+    )
     r_y_i = mo.ui.slider(
-        -3.6, 3.6, 0.1, 0, label="Fy", show_value=True, full_width=True
+        -3.6, 3.6, 0.1, 0, label="F(y)", show_value=True, full_width=True
     )
-    r_z_i = mo.ui.slider(-1, 1, 0.1, 0, label="Fz", show_value=True, full_width=True)
+    r_z_i = mo.ui.slider(
+        -1, 1, 0.1, 0, label="F(z)", show_value=True, full_width=True
+    )
     # Gravity applied location
-    r_x_g = mo.ui.slider(-2, 2, 0.1, 0, label="Fx", show_value=True, full_width=True)
-    r_y_g = mo.ui.slider(
-        -3.6, 3.6, 0.1, 0, label="Fy", show_value=True, full_width=True
+    r_x_g = mo.ui.slider(
+        -2, 2, 0.1, 0, label="G(x)", show_value=True, full_width=True
     )
-    r_z_g = mo.ui.slider(-1, 1, 0.1, 0, label="Fz", show_value=True, full_width=True)
+    r_y_g = mo.ui.slider(
+        -3.6, 3.6, 0.1, 0, label="G(y)", show_value=True, full_width=True
+    )
+    r_z_g = mo.ui.slider(
+        -1, 1, 0.1, 0, label="G(z)", show_value=True, full_width=True
+    )
     return r_x_g, r_x_i, r_y_g, r_y_i, r_z_g, r_z_i
 
 
@@ -320,25 +322,33 @@ def _(mo):
     # VTOL motors locations
     # r = 0.8  # m
     # angle_with_x = 45  # deg
-    r_x_1 = mo.ui.slider(0.1, 1, 0.05, 0.4, orientation="vertical", show_value=True)
+    r_x_1 = mo.ui.slider(
+        0.1, 1, 0.05, 0.4, orientation="vertical", show_value=True
+    )
     r_y_1 = mo.ui.slider(0.1, 1, 0.05, 0.4, debounce=True, show_value=True)
     r_z_1 = mo.ui.slider(
         -0.5, 0.5, 0.05, 0, label="z1", orientation="vertical", show_value=True
     )
 
-    r_x_2 = mo.ui.slider(-1, -0.1, 0.05, -0.4, orientation="vertical", show_value=True)
+    r_x_2 = mo.ui.slider(
+        -1, -0.1, 0.05, -0.4, orientation="vertical", show_value=True
+    )
     r_y_2 = mo.ui.slider(-1, -0.1, 0.05, -0.4, debounce=True, show_value=True)
     r_z_2 = mo.ui.slider(
         -0.5, 0.5, 0.05, 0, label="z2", orientation="vertical", show_value=True
     )
 
-    r_x_3 = mo.ui.slider(0.1, 1, 0.05, 0.4, orientation="vertical", show_value=True)
+    r_x_3 = mo.ui.slider(
+        0.1, 1, 0.05, 0.4, orientation="vertical", show_value=True
+    )
     r_y_3 = mo.ui.slider(-1, -0.1, 0.05, -0.4, debounce=True, show_value=True)
     r_z_3 = mo.ui.slider(
         -0.5, 0.5, 0.05, 0, label="z3", orientation="vertical", show_value=True
     )
 
-    r_x_4 = mo.ui.slider(-1, -0.1, 0.05, -0.4, orientation="vertical", show_value=True)
+    r_x_4 = mo.ui.slider(
+        -1, -0.1, 0.05, -0.4, orientation="vertical", show_value=True
+    )
     r_y_4 = mo.ui.slider(0.1, 1, 0.05, 0.4, debounce=True, show_value=True)
     r_z_4 = mo.ui.slider(
         -0.5, 0.5, 0.05, 0, label="z4", orientation="vertical", show_value=True
@@ -406,24 +416,30 @@ def _(mo):
 
 
 @app.cell
-def _(i_x, i_y, i_z, switch):
+def _():
+    N_kg = 9.80665
+    return (N_kg,)
+
+
+@app.cell
+def _(N_kg, i_x, i_y, i_z, switch):
     # F(x)
-    F_x = i_x.value * 9.80665 if switch.value else i_x.value  # N
+    F_x = i_x.value * N_kg if switch.value else i_x.value  # N
     # F(y)
-    F_y = i_y.value * 9.80665 if switch.value else i_y.value  # N
+    F_y = i_y.value * N_kg if switch.value else i_y.value  # N
     # F(z)
-    F_z = i_z.value * 9.80665 if switch.value else i_z.value  # N
+    F_z = i_z.value * N_kg if switch.value else i_z.value  # N
     return F_x, F_y, F_z
 
 
 @app.cell
-def _(i_m_x, i_m_y, i_m_z, m_switch):
+def _(N_kg, i_m_x, i_m_y, i_m_z, m_switch):
     # M(x)
-    m_x = i_m_x.value * 9.80665 if m_switch.value else i_m_x.value  # Nm
+    m_x = i_m_x.value * N_kg if m_switch.value else i_m_x.value  # Nm
     # M(y)
-    m_y = i_m_y.value * 9.80665 if m_switch.value else i_m_y.value  # Nm
+    m_y = i_m_y.value * N_kg if m_switch.value else i_m_y.value  # Nm
     # M(z)
-    m_z = i_m_z.value * 9.80665 if m_switch.value else i_m_z.value  # Nm
+    m_z = i_m_z.value * N_kg if m_switch.value else i_m_z.value  # Nm
     # m_z = i_m_x.value * m_switch.value # (1 for Nm, 9.80665 for kgf, etc)
     return m_x, m_y, m_z
 
@@ -547,7 +563,6 @@ def _(np, sp):
     def get_arm_rotated_matrix(r_x, r_y, r_z, theta, phi):
         r = sp.Matrix(np.array([[r_x, r_y, r_z]]).T)
         return sp.rot_axis1(phi) @ sp.rot_ccw_axis2(theta) @ r
-
     return (get_arm_rotated_matrix,)
 
 
@@ -570,10 +585,18 @@ def _(
     theta,
 ):
     R = dict()
-    R[1] = get_arm_rotated_matrix(r_x_1.value, r_y_1.value, r_z_1.value, theta, phi)
-    R[2] = get_arm_rotated_matrix(r_x_2.value, r_y_2.value, r_z_2.value, theta, phi)
-    R[3] = get_arm_rotated_matrix(r_x_3.value, r_y_3.value, r_z_3.value, theta, phi)
-    R[4] = get_arm_rotated_matrix(r_x_4.value, r_y_4.value, r_z_4.value, theta, phi)
+    R[1] = get_arm_rotated_matrix(
+        r_x_1.value, r_y_1.value, r_z_1.value, theta, phi
+    )
+    R[2] = get_arm_rotated_matrix(
+        r_x_2.value, r_y_2.value, r_z_2.value, theta, phi
+    )
+    R[3] = get_arm_rotated_matrix(
+        r_x_3.value, r_y_3.value, r_z_3.value, theta, phi
+    )
+    R[4] = get_arm_rotated_matrix(
+        r_x_4.value, r_y_4.value, r_z_4.value, theta, phi
+    )
     R
     return (R,)
 
@@ -594,7 +617,6 @@ def _(sin, sp, sqrt):
                 [T * sqrt(1 - sin(theta) ** 2 - sin(phi) ** 2)],
             ]
         )
-
     return (define_thrust_matrix,)
 
 
@@ -678,16 +700,20 @@ def _(sp):
                 A[i, j] = coeff
 
             # Constant term (move all variable terms to lhs, constant remains)
-            B[i] = eq.rhs - (eq.lhs - sum(eq.lhs.coeff(var) * var for var in variables))
+            B[i] = eq.rhs - (
+                eq.lhs - sum(eq.lhs.coeff(var) * var for var in variables)
+            )
 
         return A, B
-
     return (build_symbolic_system,)
 
 
 @app.cell
 def _(T_1, T_2, T_3, T_4, build_symbolic_system, parsed_equations):
-    A, B = build_symbolic_system([T_1, T_2, T_3, T_4], parsed_equations)
+    if len(parsed_equations) > 4:
+        A, B = build_symbolic_system([T_1, T_2, T_3, T_4], parsed_equations[1:5])
+    else:
+        A, B = build_symbolic_system([T_1, T_2, T_3, T_4], parsed_equations)
     A
     return A, B
 
@@ -727,10 +753,12 @@ def _(A, B, np):
 
 
 @app.cell
-def _(A_numeric, B_numeric, np):
+def _(A_numeric, B_numeric, N_kg, np):
     numeric_solution = np.linalg.solve(A_numeric, B_numeric).squeeze()
     for n in range(len(numeric_solution)):
-        print(f"T{n + 1} has a magnitude of {numeric_solution[n] / 9.80665:.3f}kg.")
+        print(
+            f"T{n + 1} has a magnitude of {numeric_solution[n] / N_kg:.3f}kg."
+        )
     return
 
 
