@@ -180,24 +180,24 @@ def _(Eq, linsolve, sp, x, y, z):
     def build_symbolic_system(variables, equations):
         """
         Build A and B matrices symbolically
-    
+
         variables: list of symbolic variables [x1, x2, ...]
         equations: list of Eq objects
         """
         n = len(variables)
         A = sp.zeros(n, n)  # n x n zero matrix
         B = sp.zeros(n, 1)  # n x 1 zero matrix
-    
+
         for i, eq in enumerate(equations):
             # Extract coefficients for each variable
             for j, var in enumerate(variables):
                 # Coefficient of variable in equation
                 coeff = eq.lhs.coeff(var)
                 A[i, j] = coeff
-        
+
             # Constant term (move all variable terms to lhs, constant remains)
             B[i] = eq.rhs - (eq.lhs - sum(eq.lhs.coeff(var)*var for var in variables))
-    
+
         return A, B
 
     # Example usage
@@ -250,6 +250,26 @@ def _(np, sp, symbols):
     r = sp.Matrix(np.array([[0.8*sp.cos(sp.pi/4), 0.8*sp.sin(sp.pi/4),0]]).T)
     r_1 = sp.rot_axis1(phi)@sp.rot_ccw_axis2(theta)@r
     r_1
+    return
+
+
+@app.cell
+def _():
+    from sympy import false
+
+    print(f"This is: {false == False}")
+
+    alpha = {
+        1: True,
+        2: false,
+        3: False,
+    }
+
+    alist = list()
+    for k in alpha:
+        if alpha.get(k) is not False:
+            alist.append(k)
+    alist
     return
 
 
