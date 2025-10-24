@@ -31,10 +31,10 @@ def _():
     import sympy as sp
     from sympy import Eq, linsolve, solve, symbols
     from sympy import cos, sin, sqrt
-    return Eq, cos, sin, solve, sp, sqrt, symbols
+    return Eq, linsolve, sin, sp, sqrt, symbols
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""## First iteration""")
     return
@@ -80,7 +80,7 @@ def _(firstT, g, np, ph, radians, th):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -115,10 +115,10 @@ def _(mo):
 
     $$
     \begin{align}
-    \vec{M_i} &= c\vec{T_1} + \vec{r_1}\times\vec{T_1} + \\
-              &= c\vec{T_2} + \vec{r_2}\times\vec{T_2} + \\
-              &= c\vec{T_3} + \vec{r_3}\times\vec{T_3} + \\
-              &= c\vec{T_4} + \vec{r_4}\times\vec{T_4}
+    \vec{M_i} + \vec{r_i}\times\vec{i} &= c_{ccw}\vec{T_1} + \vec{r_1}\times\vec{T_1} \\
+              &+ c_{ccw}\vec{T_2} + \vec{r_2}\times\vec{T_2} \\
+              &+ c_{cw}\vec{T_3} + \vec{r_3}\times\vec{T_3} \\
+              &+ c_{cw}\vec{T_4} + \vec{r_4}\times\vec{T_4}
     \end{align}
     $$
     """
@@ -126,7 +126,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -143,7 +143,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
@@ -183,23 +183,213 @@ def _(mo):
     return
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    # Angles
+    roll = mo.ui.slider(
+        start=-90,
+        stop=90,
+        step=0.05,
+        value=0,
+        label="Roll:",
+        debounce=True,
+        show_value=True,
+        full_width=True,
+    )  # degrees
+    pitch = mo.ui.slider(
+        start=-90,
+        stop=90,
+        step=0.05,
+        value=0,
+        label="Pitch:",
+        debounce=True,
+        show_value=True,
+        full_width=True,
+    )  # degrees
+    return pitch, roll
+
+
+@app.cell(hide_code=True)
+def _(mo, pitch, roll):
+    mo.hstack(
+        [roll, pitch],
+        justify="center",
+        align="center",
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
     # Forces
-    i_x = 5  # kgf
-    i_y = 4  # kgf
-    i_z = 0  # kgf
-    m_ix = 0  # kgf-m
-    m_iy = 0  # kgf-m
-    m_iz = 0  # kgf-m
+    switch = mo.ui.switch(value=True, label="kg")
+    i_x = mo.ui.number(value=0, step=0.01, debounce=True)  # kgf
+    i_y = mo.ui.number(value=0, step=0.01, debounce=True)  # kgf
+    i_z = mo.ui.number(value=0, step=0.01, debounce=True)  # kgf
+    # Momentum
+    m_switch = mo.ui.switch(value=True, label="kg-m")
+    i_m_x = mo.ui.number(value=0, step=0.01, debounce=True)  # kgf-m
+    i_m_y = mo.ui.number(value=0, step=0.01, debounce=True)  # kgf-m
+    i_m_z = mo.ui.number(value=0, step=0.01, debounce=True)  # kgf-m
 
-    # radius and angle (atm symmetrical)
-    r = 0.8  # m
-    angle_with_x = 45  # deg
+    # motors coefficient for Thrust Momentum
+    m_coeff = mo.ui.slider(
+        start=0,
+        stop=0.85,
+        step=0.05,
+        value=0,
+        debounce=True,
+        show_value=True,
+        full_width=True,
+    )  # "Adimensional"
+    return i_m_x, i_m_y, i_m_z, i_x, i_y, i_z, m_coeff, m_switch, switch
 
-    # coefficient for Thrust Momentum in motors
-    c = 0.35  # "Adimensional"
-    return angle_with_x, c, i_x, i_y, i_z, m_ix, m_iy, m_iz, r
+
+@app.cell(hide_code=True)
+def _(i_m_x, i_m_y, i_m_z, i_x, i_y, i_z, m_coeff, m_switch, mo, switch):
+    mo.accordion(
+        {
+            "X force input": mo.hstack([i_x, switch]),
+            "Y force input": mo.hstack([i_y, switch]),
+            "Z force input": mo.hstack([i_z, switch]),
+            "X momentum input": mo.hstack([i_m_x, m_switch]),
+            "Y momentum input": mo.hstack([i_m_y, m_switch]),
+            "Z momentum input": mo.hstack([i_m_z, m_switch]),
+            "Motors Momentum coefficient": m_coeff,
+        },
+        multiple=True,
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    # Forces applied location
+    r_x_i = mo.ui.slider(
+        -2, 2, 0.1, 0, label="Fx", show_value=True, full_width=True
+    )
+    r_y_i = mo.ui.slider(
+        -3.6, 3.6, 0.1, 0, label="Fy", show_value=True, full_width=True
+    )
+    r_z_i = mo.ui.slider(
+        -1, 1, 0.1, 0, label="Fz", show_value=True, full_width=True
+    )
+    # Gravity applied location
+    r_x_g = mo.ui.slider(
+        -2, 2, 0.1, 0, label="Fx", show_value=True, full_width=True
+    )
+    r_y_g = mo.ui.slider(
+        -3.6, 3.6, 0.1, 0, label="Fy", show_value=True, full_width=True
+    )
+    r_z_g = mo.ui.slider(
+        -1, 1, 0.1, 0, label="Fz", show_value=True, full_width=True
+    )
+    return r_x_g, r_x_i, r_y_g, r_y_i, r_z_g, r_z_i
+
+
+@app.cell(hide_code=True)
+def _(mo, r_x_g, r_x_i, r_y_g, r_y_i, r_z_g, r_z_i):
+    mo.vstack(
+        [
+            mo.md("Force location"),
+            r_x_i,
+            r_y_i,
+            r_z_i,
+            mo.md("Gravity location"),
+            r_x_g,
+            r_y_g,
+            r_z_g,
+        ],
+        align="center",
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    # VTOL motors locations
+    # r = 0.8  # m
+    # angle_with_x = 45  # deg
+    r_x_1 = mo.ui.slider(
+        0.1, 1, 0.05, 0.4, orientation="vertical", show_value=True
+    )
+    r_y_1 = mo.ui.slider(0.1, 1, 0.05, 0.4, debounce=True, show_value=True)
+    r_z_1 = mo.ui.slider(
+        -0.5, 0.5, 0.05, 0, label="z1", orientation="vertical", show_value=True
+    )
+
+    r_x_2 = mo.ui.slider(
+        -1, -0.1, 0.05, -0.4, orientation="vertical", show_value=True
+    )
+    r_y_2 = mo.ui.slider(-1, -0.1, 0.05, -0.4, debounce=True, show_value=True)
+    r_z_2 = mo.ui.slider(
+        -0.5, 0.5, 0.05, 0, label="z2", orientation="vertical", show_value=True
+    )
+
+    r_x_3 = mo.ui.slider(
+        0.1, 1, 0.05, 0.4, orientation="vertical", show_value=True
+    )
+    r_y_3 = mo.ui.slider(-1, -0.1, 0.05, -0.4, debounce=True, show_value=True)
+    r_z_3 = mo.ui.slider(
+        -0.5, 0.5, 0.05, 0, label="z3", orientation="vertical", show_value=True
+    )
+
+    r_x_4 = mo.ui.slider(
+        -1, -0.1, 0.05, -0.4, orientation="vertical", show_value=True
+    )
+    r_y_4 = mo.ui.slider(0.1, 1, 0.05, 0.4, debounce=True, show_value=True)
+    r_z_4 = mo.ui.slider(
+        -0.5, 0.5, 0.05, 0, label="z4", orientation="vertical", show_value=True
+    )
+    return (
+        r_x_1,
+        r_x_2,
+        r_x_3,
+        r_x_4,
+        r_y_1,
+        r_y_2,
+        r_y_3,
+        r_y_4,
+        r_z_1,
+        r_z_2,
+        r_z_3,
+        r_z_4,
+    )
+
+
+@app.cell(hide_code=True)
+def _(
+    mo,
+    r_x_1,
+    r_x_2,
+    r_x_3,
+    r_x_4,
+    r_y_1,
+    r_y_2,
+    r_y_3,
+    r_y_4,
+    r_z_1,
+    r_z_2,
+    r_z_3,
+    r_z_4,
+):
+    mo.hstack(
+        [
+            mo.vstack(
+                [mo.md("^ X T3"), r_x_3, r_y_3, mo.md("T2"), r_y_2, r_x_2],
+                align="end",
+            ),
+            mo.vstack(
+                [mo.md("T1"), r_x_1, r_y_1, mo.md("T4 Y >"), r_y_4, r_x_4],
+                align="start",
+            ),
+            r_z_1,
+            r_z_2,
+            r_z_3,
+            r_z_4,
+        ]
+    )
+    return
 
 
 @app.cell(hide_code=True)
@@ -214,24 +404,98 @@ def _(mo):
 
 
 @app.cell
-def _(G, angle_with_x, i_x, i_y, i_z, sp):
-    # EF(x)
-    F_x = i_x * 9.80665  # N
-    # EF(y)
-    F_y = i_y * 9.80665  # N
-    # EF(z)
-    F_z = G + i_z  # N
-
-    # Radius angle with x
-    alpha = dict()
-    alpha[1] = sp.rad(angle_with_x)  # radians
-    alpha[2] = sp.rad(180 + angle_with_x)  # radians
-    alpha[3] = sp.rad(360 - angle_with_x)  # radians
-    alpha[4] = sp.rad(90 + angle_with_x)  # radians
-    return F_x, F_y, F_z, alpha
+def _(i_x, i_y, i_z, switch):
+    # F(x)
+    F_x = i_x.value * 9.80665 if switch.value else i_x.value # N
+    # F(y)
+    F_y = i_y.value * 9.80665 if switch.value else i_y.value # N
+    # F(z)
+    F_z = i_z.value * 9.80665 if switch.value else i_z.value # N
+    return F_x, F_y, F_z
 
 
 @app.cell
+def _(i_m_x, i_m_y, i_m_z, m_switch):
+    # M(x)
+    m_x = i_m_x.value * 9.80665 if m_switch.value else i_m_x.value # Nm
+    # M(y)
+    m_y = i_m_y.value * 9.80665 if m_switch.value else i_m_y.value # Nm
+    # M(z)
+    m_z = i_m_z.value * 9.80665 if m_switch.value else i_m_z.value # Nm
+    # m_z = i_m_x.value * m_switch.value # (1 for Nm, 9.80665 for kgf, etc)
+    return m_x, m_y, m_z
+
+
+@app.cell
+def _(m_coeff):
+    m_c_cw = -m_coeff.value 
+    m_c_ccw = m_coeff.value
+    return m_c_ccw, m_c_cw
+
+
+@app.cell
+def _(pitch, roll, sp):
+    # Radius angle with x
+    # alpha = dict()
+    # alpha[1] = sp.rad(angle_with_x)  # radians
+    # alpha[2] = sp.rad(180 + angle_with_x)  # radians
+    # alpha[3] = sp.rad(360 - angle_with_x)  # radians
+    # alpha[4] = sp.rad(90 + angle_with_x)  # radians
+
+    # Euler Angles
+    phi = sp.rad(roll.value)  # Roll in radians
+    theta = sp.rad(pitch.value)  # Pitch in radians
+    return phi, theta
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""### Calculate inputs""")
+    return
+
+
+@app.cell
+def _(F_z, G):
+    # EF(z)
+    EF_z = G + F_z
+    return (EF_z,)
+
+
+@app.cell
+def _(
+    F_x,
+    F_y,
+    F_z,
+    G,
+    m_x,
+    m_y,
+    m_z,
+    np,
+    r_x_g,
+    r_x_i,
+    r_y_g,
+    r_y_i,
+    r_z_g,
+    r_z_i,
+    sp,
+):
+    i_r = sp.Matrix(np.array([[r_x_i.value, r_y_i.value, r_z_i.value]]).T)
+    m_i = sp.Matrix(np.array([[F_x, F_y, F_z]]).T)
+    M_i = i_r.cross(m_i)
+    # M_g
+    i_g = sp.Matrix(np.array([[r_x_g.value, r_y_g.value, r_z_g.value]]).T)
+    m_g = sp.Matrix(np.array([[0, 0, G]]).T)
+    M_g = i_g.cross(m_g)
+    # EM
+    EM = sp.Matrix(np.array([[m_x,m_y,m_z]]).T) + M_g + M_i
+    M_x = EM[0]
+    M_y = EM[1]
+    M_z = EM[2]
+    EM
+    return M_x, M_y, M_z
+
+
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""### Defining variables to solve""")
     return
@@ -240,23 +504,23 @@ def _(mo):
 @app.cell
 def _(symbols):
     # Define symbolic variables
-    T_1, T_2, T_3, T_4, phi, theta = symbols("T1 T2 T3 T4 phi theta")
-    return T_1, T_2, T_3, T_4, phi, theta
+    T_1, T_2, T_3, T_4 = symbols("T1 T2 T3 T4")
+    return T_1, T_2, T_3, T_4
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""### Force equations""")
     return
 
 
-@app.cell
-def _(Eq, F_x, F_y, F_z, T_1, T_2, T_3, T_4, cos, phi, sin, sqrt, theta):
+@app.cell(hide_code=True)
+def _(EF_z, Eq, F_x, F_y, T_1, T_2, T_3, T_4, phi, sin, sqrt, theta):
     # Define equations
     equations = dict()
 
     equations[1] = Eq(
-        T_1 * cos(theta) - T_2 * sin(theta) + T_3 * sin(theta) - T_4 * sin(theta),
+        T_1 * sin(theta) - T_2 * sin(theta) + T_3 * sin(theta) - T_4 * sin(theta),
         F_x,
     )
     equations[2] = Eq(
@@ -264,44 +528,68 @@ def _(Eq, F_x, F_y, F_z, T_1, T_2, T_3, T_4, cos, phi, sin, sqrt, theta):
     )
     equations[3] = Eq(
         (T_1 + T_2 + T_3 + T_4) * sqrt(1 - sin(theta) ** 2 - sin(phi) ** 2),
-        F_z,
+        EF_z,
     )
     equations
     return (equations,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""### Arm rotated matrix""")
     return
 
 
-@app.cell
-def _(cos, np, sin, sp):
-    def get_arm_rotated_matrix(r, alpha, theta, phi):
-        r = sp.Matrix(np.array([[r * cos(alpha), r * sin(alpha), 0]]).T)
+@app.cell(hide_code=True)
+def _(np, sp):
+    def get_arm_rotated_matrix(r_x, r_y, r_z, theta, phi):
+        r = sp.Matrix(np.array([[r_x, r_y, r_z]]).T)
         return sp.rot_axis1(phi) @ sp.rot_ccw_axis2(theta) @ r
     return (get_arm_rotated_matrix,)
 
 
-@app.cell
-def _(alpha, get_arm_rotated_matrix, phi, r, theta):
+@app.cell(hide_code=True)
+def _(
+    get_arm_rotated_matrix,
+    phi,
+    r_x_1,
+    r_x_2,
+    r_x_3,
+    r_x_4,
+    r_y_1,
+    r_y_2,
+    r_y_3,
+    r_y_4,
+    r_z_1,
+    r_z_2,
+    r_z_3,
+    r_z_4,
+    theta,
+):
     R = dict()
-    R[1] = get_arm_rotated_matrix(r, alpha[1], theta, phi)
-    R[2] = get_arm_rotated_matrix(r, alpha[2], theta, phi)
-    R[3] = get_arm_rotated_matrix(r, alpha[3], theta, phi)
-    R[4] = get_arm_rotated_matrix(r, alpha[4], theta, phi)
+    R[1] = get_arm_rotated_matrix(
+        r_x_1.value, r_y_1.value, r_z_1.value, theta, phi
+    )
+    R[2] = get_arm_rotated_matrix(
+        r_x_2.value, r_y_2.value, r_z_2.value, theta, phi
+    )
+    R[3] = get_arm_rotated_matrix(
+        r_x_3.value, r_y_3.value, r_z_3.value, theta, phi
+    )
+    R[4] = get_arm_rotated_matrix(
+        r_x_4.value, r_y_4.value, r_z_4.value, theta, phi
+    )
     R
     return (R,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""### Thrust vector for matrix equation""")
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(sin, sp, sqrt):
     def define_thrust_matrix(T, theta, phi):
         return sp.Matrix(
@@ -314,7 +602,7 @@ def _(sin, sp, sqrt):
     return (define_thrust_matrix,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(T_1, T_2, T_3, T_4, define_thrust_matrix, phi, theta):
     T = dict()
     T[1] = define_thrust_matrix(T_1, theta, -phi)
@@ -325,41 +613,50 @@ def _(T_1, T_2, T_3, T_4, define_thrust_matrix, phi, theta):
     return (T,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""### Calculate Momentum Matrix and add to equations""")
     return
 
 
-@app.cell
-def _(R, T, c, sp):
+@app.cell(hide_code=True)
+def _(R, T, m_c_ccw, m_c_cw, sp):
     m_matrix = sp.zeros(3, 1)
 
     for i in range(1, 4 + 1):
         temp_m = R[i].cross(T[i])
         print(temp_m)
-        temp_m += c * T[i]
+        if i >= 2:
+            temp_m += m_c_ccw * T[i]
+        else:
+            temp_m += m_c_cw * T[i]
         m_matrix += temp_m
     m_matrix
     return (m_matrix,)
 
 
-@app.cell
-def _(Eq, equations, m_ix, m_iy, m_iz, m_matrix):
-    equations[4] = Eq(m_matrix[0], m_ix)
-    equations[5] = Eq(m_matrix[1], m_iy)
-    equations[6] = Eq(m_matrix[2], m_iz)
-    equations
-    return
+@app.cell(hide_code=True)
+def _(Eq, M_x, M_y, M_z, equations, m_matrix, sp):
+    equations[4] = Eq(m_matrix[0], M_x)
+    equations[5] = Eq(m_matrix[1], M_y)
+    equations[6] = Eq(m_matrix[2], M_z)
+
+    parsed_equations = list()
+
+    for k in equations:
+        if equations.get(k) not in (True, sp.true, False, sp.false):
+            parsed_equations.append(equations[k])
+    parsed_equations
+    return (parsed_equations,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""### Build system into A x = B format""")
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(sp):
     def build_symbolic_system(variables, equations):
         """
@@ -389,8 +686,8 @@ def _(sp):
 
 
 @app.cell
-def _(T_1, T_2, T_3, T_4, build_symbolic_system, equations, phi, theta):
-    A, B = build_symbolic_system([T_1, T_2, T_3, T_4, phi, theta], list(equations.values()))
+def _(T_1, T_2, T_3, T_4, build_symbolic_system, parsed_equations):
+    A, B = build_symbolic_system([T_1, T_2, T_3, T_4], parsed_equations)
     A
     return A, B
 
@@ -402,8 +699,8 @@ def _(B):
 
 
 @app.cell
-def _(A, B, T_1, T_2, T_3, T_4, phi, solve, theta):
-    solution = solve((A,B),T_1, T_2, T_3, T_4, phi, theta)
+def _(A, B, T_1, T_2, T_3, T_4, linsolve):
+    solution = linsolve((A, B), T_1, T_2, T_3, T_4)
     solution
     return
 
