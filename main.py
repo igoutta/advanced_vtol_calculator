@@ -612,8 +612,9 @@ def _(F_x, F_y, F_z, define_vector, phi, rotate_vector, theta):
 
 
 @app.cell
-def _(G, define_vector, phi, rotate_vector, theta):
+def _(G, define_vector, np, phi, rotate_vector, theta):
     G_prima = rotate_vector(define_vector(0, 0, G), theta, phi)
+    print(np.array(G_prima,dtype=np.float64))
     G_prima
     return (G_prima,)
 
