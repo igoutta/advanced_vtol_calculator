@@ -204,7 +204,7 @@ def _(mo):
     roll = mo.ui.slider(
         start=-90,
         stop=90,
-        step=0.05,
+        step=0.1,
         value=0,
         label="Roll:",
         debounce=True,
@@ -221,7 +221,6 @@ def _(mo):
         show_value=True,
         full_width=True,
     )  # degrees
-
     return pitch, roll
 
 
@@ -446,8 +445,8 @@ def _(N_kg, i_m_x, i_m_y, i_m_z, m_switch):
 
 @app.cell
 def _(m_coeff):
-    m_c_cw = -m_coeff.value
-    m_c_ccw = m_coeff.value
+    m_c_cw = m_coeff.value
+    m_c_ccw = -m_coeff.value
     return m_c_ccw, m_c_cw
 
 
@@ -562,7 +561,7 @@ def _(mo):
 def _(np, sp):
     def get_arm_rotated_matrix(r_x, r_y, r_z, theta, phi):
         r = sp.Matrix(np.array([[r_x, r_y, r_z]]).T)
-        return sp.rot_axis1(phi) @ sp.rot_ccw_axis2(theta) @ r
+        return sp.rot_ccw_axis1(phi) @ sp.rot_axis2(theta) @ r
     return (get_arm_rotated_matrix,)
 
 
@@ -752,13 +751,11 @@ def _(A, B, np):
     return A_numeric, B_numeric
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(A_numeric, B_numeric, N_kg, np):
     numeric_solution = np.linalg.solve(A_numeric, B_numeric).squeeze()
     for n in range(len(numeric_solution)):
-        print(
-            f"T{n + 1} has a magnitude of {numeric_solution[n] / N_kg:.3f}kg."
-        )
+        print(f"T{n + 1} has a magnitude of {numeric_solution[n] / N_kg:.3f}kg.")
     return
 
 
