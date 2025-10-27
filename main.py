@@ -160,6 +160,24 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    ### Reference system
+    - X forward, between T1 and T3 $(+)$
+    - Y right, between T1 and T4 $(+)$
+    - Z down from the plane XY $(+)$
+    - Roll $\phi$, CCW rotation around X-axis creating a Y angle $(+)$
+    - Pitch $\theta$, CW rotation around Y-axis creating a X angle $(+)$
+    - All T forces are negative given the reference system
+    - Momentum of T for reference are $(-)$ for T1 and T2 and $(+)$ for T3 and T4
+    - 
+    """
+    )
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -167,11 +185,11 @@ def _(mo):
     ## Main  Equations
 
     $$
-    i_x = T_1\sin{\theta} - T_2\sin{\theta} + T_3\sin{\theta} - T_4\sin{\theta}
+    i_x = - T_1\sin{\theta} + T_2\sin{\theta} - T_3\sin{\theta} + T_4\sin{\theta}
     $$
 
     $$
-    i_y = - T_1\sin{\phi} + T_2\sin{\phi} + T_3\sin{\phi} - T_4\sin{\phi}
+    i_y = + T_1\sin{\phi} - T_2\sin{\phi} - T_3\sin{\phi} + T_4\sin{\phi}
     $$
 
     $$
@@ -537,11 +555,11 @@ def _(EF_z, Eq, F_x, F_y, T_1, T_2, T_3, T_4, phi, sin, sqrt, theta):
     equations = dict()
 
     equations[1] = Eq(
-        T_1 * sin(theta) - T_2 * sin(theta) + T_3 * sin(theta) - T_4 * sin(theta),
+       - T_1 * sin(theta) + T_2 * sin(theta) - T_3 * sin(theta) + T_4 * sin(theta),
         F_x,
     )
     equations[2] = Eq(
-        -T_1 * sin(phi) + T_2 * sin(phi) + T_3 * sin(phi) - T_4 * sin(phi), F_y
+        T_1 * sin(phi) - T_2 * sin(phi) - T_3 * sin(phi) + T_4 * sin(phi), F_y
     )
     equations[3] = Eq(
         (T_1 + T_2 + T_3 + T_4) * sqrt(1 - sin(theta) ** 2 - sin(phi) ** 2),
