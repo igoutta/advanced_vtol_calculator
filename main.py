@@ -37,7 +37,7 @@ def _():
     import sympy as sp
     from sympy import Eq, linsolve, solve, symbols
     from sympy import cos, sin, sqrt
-    return Eq, linsolve, sin, sp, sqrt, symbols
+    return Eq, linsolve, sp, symbols
 
 
 @app.cell(hide_code=True)
@@ -148,11 +148,38 @@ def _(mo):
     Usually orthogonal to the XY plane, upwards, with rotation given two euler angle, Roll = $\phi$ and Pitch = $\theta$.
 
     $$
-    T_n = 
+    T_1 = 
     \begin{pmatrix}
-    ||T_n||\sin{\theta} \\
-    ||T_n||\sin{\phi} \\
-    ||T_n||\sqrt{1 - \sin^2{\theta} - \sin^2{\phi}}
+    ||T_1||\sin{\theta} \\
+    ||T_1||-\sin{\phi} \\
+    -||T_1||\sqrt{1 - \sin^2{\theta} - \sin^2{\phi}}
+    \end{pmatrix}
+    $$
+
+    $$
+    T_2 = 
+    \begin{pmatrix}
+    ||T_2||-\sin{\theta} \\
+    ||T_2||\sin{\phi} \\
+    -||T_2||\sqrt{1 - \sin^2{\theta} - \sin^2{\phi}}
+    \end{pmatrix}
+    $$
+
+    $$
+    T_3 = 
+    \begin{pmatrix}
+    ||T_3||\sin{\theta} \\
+    ||T_3||\sin{\phi} \\
+    -||T_3||\sqrt{1 - \sin^2{\theta} - \sin^2{\phi}}
+    \end{pmatrix}
+    $$
+
+    $$
+    T_4 = 
+    \begin{pmatrix}
+    ||T_4||-\sin{\theta} \\
+    ||T_4||-\sin{\phi} \\
+    -||T_4||\sqrt{1 - \sin^2{\theta} - \sin^2{\phi}}
     \end{pmatrix}
     $$
     """
@@ -160,19 +187,19 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
     ### Reference system
+
     - X forward, between T1 and T3 $(+)$
     - Y right, between T1 and T4 $(+)$
     - Z down from the plane XY $(+)$
     - Roll $\phi$, CCW rotation around X-axis creating a Y angle $(+)$
-    - Pitch $\theta$, CW rotation around Y-axis creating a X angle $(+)$
+    - Pitch $\theta$, CW rotation around Y-axis creating a X angle $(-)$
     - All T forces are negative given the reference system
-    - Momentum of T for reference are $(-)$ for T1 and T2 and $(+)$ for T3 and T4
-    - 
+    - Momentum of T for reference are $(-)$ for T1 and T2 and $(+)$ for T3 and T4, but T is negative, so at the end, it remains as usual.
     """
     )
     return
@@ -184,22 +211,45 @@ def _(mo):
         r"""
     ## Main  Equations
 
-    $$
-    i_x = - T_1\sin{\theta} + T_2\sin{\theta} - T_3\sin{\theta} + T_4\sin{\theta}
-    $$
+    ### Normal system
 
     $$
-    i_y = + T_1\sin{\phi} - T_2\sin{\phi} - T_3\sin{\phi} + T_4\sin{\phi}
+    i_z + G = T_1 + T_2 + T_3 + T_4
     $$
-
-    $$
-    i_z + G = (T_1 + T_2 + T_3 + T_4)\sqrt{1 - \sin^2{\theta} - \sin^2{\phi}}
-    $$
-
 
     $$
     \begin{align}
     \vec{M_i} + \vec{r_i}\times\vec{i} &= c_{ccw}\vec{T_1} + \vec{r_1}\times\vec{T_1} \\
+              &+ c_{ccw}\vec{T_2} + \vec{r_2}\times\vec{T_2} \\
+              &+ c_{cw}\vec{T_3} + \vec{r_3}\times\vec{T_3} \\
+              &+ c_{cw}\vec{T_4} + \vec{r_4}\times\vec{T_4}
+    \end{align}
+    $$
+
+    ### Change of system of reference
+
+    $$
+    \vec{F'_i} = Rot_{CCW}(\Phi)\times Rot(\Theta)\times \vec{F_i}
+    $$
+
+
+    $$
+    \vec{G'} = Rot_{CCW}(\Phi)\times Rot(\Theta)\times \vec{G}
+    $$
+
+    $$
+    \vec{M'_i} =  Rot_{CCW}(\Phi)\times Rot(\Theta)\times \vec{M_i}
+    $$
+
+    ### System with the Rotated reference
+
+    $$
+    i'_z + G' = T_1 + T_2 + T_3 + T_4
+    $$
+
+    $$
+    \begin{align}
+    \vec{M'_i} + \vec{r'_G}\times\vec{G'} + \vec{r'_i}\times\vec{i'} &= c_{ccw}\vec{T_1} + \vec{r_1}\times\vec{T_1} \\
               &+ c_{ccw}\vec{T_2} + \vec{r_2}\times\vec{T_2} \\
               &+ c_{cw}\vec{T_3} + \vec{r_3}\times\vec{T_3} \\
               &+ c_{cw}\vec{T_4} + \vec{r_4}\times\vec{T_4}
@@ -295,23 +345,65 @@ def _(i_m_x, i_m_y, i_m_z, i_x, i_y, i_z, m_coeff, m_switch, mo, switch):
 def _(mo):
     # Forces applied location
     r_x_i = mo.ui.slider(
-        -2, 2, 0.1, 0, label="F(x)", show_value=True, full_width=True
+        -2,
+        2,
+        0.05,
+        0,
+        label="F(x)",
+        debounce=True,
+        show_value=True,
+        full_width=True,
     )
     r_y_i = mo.ui.slider(
-        -3.6, 3.6, 0.1, 0, label="F(y)", show_value=True, full_width=True
+        -3.6,
+        3.6,
+        0.05,
+        0,
+        label="F(y)",
+        debounce=True,
+        show_value=True,
+        full_width=True,
     )
     r_z_i = mo.ui.slider(
-        -1, 1, 0.1, 0, label="F(z)", show_value=True, full_width=True
+        -1,
+        1,
+        0.05,
+        0,
+        label="F(z)",
+        debounce=True,
+        show_value=True,
+        full_width=True,
     )
     # Gravity applied location
     r_x_g = mo.ui.slider(
-        -2, 2, 0.1, 0, label="G(x)", show_value=True, full_width=True
+        -0.8,
+        0.8,
+        0.05,
+        0,
+        label="G(x)",
+        debounce=True,
+        show_value=True,
+        full_width=True,
     )
     r_y_g = mo.ui.slider(
-        -3.6, 3.6, 0.1, 0, label="G(y)", show_value=True, full_width=True
+        -1,
+        1,
+        0.05,
+        0,
+        label="G(y)",
+        debounce=True,
+        show_value=True,
+        full_width=True,
     )
     r_z_g = mo.ui.slider(
-        -1, 1, 0.1, 0, label="G(z)", show_value=True, full_width=True
+        -0.5,
+        0.5,
+        0.05,
+        0,
+        label="G(z)",
+        debounce=True,
+        show_value=True,
+        full_width=True,
     )
     return r_x_g, r_x_i, r_y_g, r_y_i, r_z_g, r_z_i
 
@@ -439,13 +531,15 @@ def _():
 
 
 @app.cell
-def _(N_kg, i_x, i_y, i_z, switch):
+def _(G, N_kg, i_x, i_y, i_z, switch):
     # F(x)
     F_x = i_x.value * N_kg if switch.value else i_x.value  # N
     # F(y)
     F_y = i_y.value * N_kg if switch.value else i_y.value  # N
     # F(z)
     F_z = i_z.value * N_kg if switch.value else i_z.value  # N
+    # EF(z)
+    EF_z = G + F_z
     return F_x, F_y, F_z
 
 
@@ -463,71 +557,17 @@ def _(N_kg, i_m_x, i_m_y, i_m_z, m_switch):
 
 @app.cell
 def _(m_coeff):
-    m_c_cw = m_coeff.value
-    m_c_ccw = -m_coeff.value
+    m_c_cw = -m_coeff.value  # T has negative sign
+    m_c_ccw = m_coeff.value  # T has negative sign but CCW also has negative sign so both cancel each other.
     return m_c_ccw, m_c_cw
 
 
 @app.cell
 def _(pitch, roll, sp):
-    # Radius angle with x
-    # alpha = dict()
-    # alpha[1] = sp.rad(angle_with_x)  # radians
-    # alpha[2] = sp.rad(180 + angle_with_x)  # radians
-    # alpha[3] = sp.rad(360 - angle_with_x)  # radians
-    # alpha[4] = sp.rad(90 + angle_with_x)  # radians
-
     # Euler Angles
     phi = sp.rad(roll.value)  # Roll in radians
     theta = sp.rad(pitch.value)  # Pitch in radians
     return phi, theta
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""### Calculate inputs""")
-    return
-
-
-@app.cell
-def _(F_z, G):
-    # EF(z)
-    EF_z = G + F_z
-    return (EF_z,)
-
-
-@app.cell
-def _(
-    F_x,
-    F_y,
-    F_z,
-    G,
-    m_x,
-    m_y,
-    m_z,
-    np,
-    r_x_g,
-    r_x_i,
-    r_y_g,
-    r_y_i,
-    r_z_g,
-    r_z_i,
-    sp,
-):
-    i_r = sp.Matrix(np.array([[r_x_i.value, r_y_i.value, r_z_i.value]]).T)
-    m_i = sp.Matrix(np.array([[F_x, F_y, F_z]]).T)
-    M_i = i_r.cross(m_i)
-    # M_g
-    i_g = sp.Matrix(np.array([[r_x_g.value, r_y_g.value, r_z_g.value]]).T)
-    m_g = sp.Matrix(np.array([[0, 0, G]]).T)
-    M_g = i_g.cross(m_g)
-    # EM
-    EM = sp.Matrix(np.array([[m_x, m_y, m_z]]).T) + M_g + M_i
-    M_x = EM[0]
-    M_y = EM[1]
-    M_z = EM[2]
-    EM
-    return M_x, M_y, M_z
 
 
 @app.cell(hide_code=True)
@@ -545,48 +585,96 @@ def _(symbols):
 
 @app.cell(hide_code=True)
 def _(mo):
+    mo.md(r"""### Rotate reference system""")
+    return
+
+
+@app.cell(hide_code=True)
+def _(np, sp):
+    def define_vector(x_n, y_n, z_n):
+        return sp.Matrix(np.array([[x_n, y_n, z_n]]).T)
+    return (define_vector,)
+
+
+@app.cell(hide_code=True)
+def _(sp):
+    def rotate_vector(v: sp.Matrix, theta, phi):
+        return sp.rot_ccw_axis1(phi) @ sp.rot_axis2(theta) @ v
+    return (rotate_vector,)
+
+
+@app.cell
+def _(F_x, F_y, F_z, define_vector, phi, rotate_vector, theta):
+    F = define_vector(F_x, F_y, F_z)
+    F_prima = rotate_vector(F, theta, phi)
+    F_prima
+    return (F_prima,)
+
+
+@app.cell
+def _(G, define_vector, phi, rotate_vector, theta):
+    G_prima = rotate_vector(define_vector(0, 0, G), theta, phi)
+    G_prima
+    return (G_prima,)
+
+
+@app.cell
+def _(
+    F_prima,
+    G_prima,
+    define_vector,
+    m_x,
+    m_y,
+    m_z,
+    phi,
+    r_x_g,
+    r_x_i,
+    r_y_g,
+    r_y_i,
+    r_z_g,
+    r_z_i,
+    rotate_vector,
+    theta,
+):
+    i_r = define_vector(r_x_i.value, r_y_i.value, r_z_i.value)
+    i_r_prima = rotate_vector(i_r, theta, phi)
+    M_i_prima = i_r_prima.cross(F_prima)
+    # M_g
+    i_g = define_vector(r_x_g.value, r_y_g.value, r_z_g.value)
+    i_g_prima = rotate_vector(i_g, theta, phi)
+    M_g_prima = i_g_prima.cross(G_prima)
+    # EM
+    M_n = define_vector(m_x, m_y, m_z)
+    M_n_prima = rotate_vector(M_n, theta, phi)
+    M_prima = M_n_prima + M_g_prima + M_i_prima
+    M_prima
+    return (M_prima,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
     mo.md(r"""### Force equations""")
     return
 
 
 @app.cell(hide_code=True)
-def _(EF_z, Eq, F_x, F_y, T_1, T_2, T_3, T_4, phi, sin, sqrt, theta):
+def _(Eq, F_prima, G_prima, T_1, T_2, T_3, T_4):
     # Define equations
     equations = dict()
-
-    equations[1] = Eq(
-       - T_1 * sin(theta) + T_2 * sin(theta) - T_3 * sin(theta) + T_4 * sin(theta),
-        F_x,
-    )
-    equations[2] = Eq(
-        T_1 * sin(phi) - T_2 * sin(phi) - T_3 * sin(phi) + T_4 * sin(phi), F_y
-    )
-    equations[3] = Eq(
-        (T_1 + T_2 + T_3 + T_4) * sqrt(1 - sin(theta) ** 2 - sin(phi) ** 2),
-        EF_z,
-    )
+    equations["Fz"] = Eq(T_1 + T_2 + T_3 + T_4, F_prima[2] + G_prima[2])
     equations
     return (equations,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""### VTOL location matrices with rotations""")
+    mo.md(r"""### VTOL thrust and location vectors""")
     return
 
 
 @app.cell(hide_code=True)
-def _(np, sp):
-    def get_arm_rotated_matrix(r_x, r_y, r_z, theta, phi):
-        r = sp.Matrix(np.array([[r_x, r_y, r_z]]).T)
-        return sp.rot_ccw_axis1(phi) @ sp.rot_axis2(theta) @ r
-    return (get_arm_rotated_matrix,)
-
-
-@app.cell(hide_code=True)
 def _(
-    get_arm_rotated_matrix,
-    phi,
+    define_vector,
     r_x_1,
     r_x_2,
     r_x_3,
@@ -599,51 +687,23 @@ def _(
     r_z_2,
     r_z_3,
     r_z_4,
-    theta,
 ):
     R = dict()
-    R[1] = get_arm_rotated_matrix(
-        r_x_1.value, r_y_1.value, r_z_1.value, theta, phi
-    )
-    R[2] = get_arm_rotated_matrix(
-        r_x_2.value, r_y_2.value, r_z_2.value, theta, phi
-    )
-    R[3] = get_arm_rotated_matrix(
-        r_x_3.value, r_y_3.value, r_z_3.value, theta, phi
-    )
-    R[4] = get_arm_rotated_matrix(
-        r_x_4.value, r_y_4.value, r_z_4.value, theta, phi
-    )
+    R[1] = define_vector(r_x_1.value, r_y_1.value, r_z_1.value)
+    R[2] = define_vector(r_x_2.value, r_y_2.value, r_z_2.value)
+    R[3] = define_vector(r_x_3.value, r_y_3.value, r_z_3.value)
+    R[4] = define_vector(r_x_4.value, r_y_4.value, r_z_4.value)
     R
     return (R,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""### Thrust vector for matrix equation""")
-    return
-
-
-@app.cell(hide_code=True)
-def _(sin, sp, sqrt):
-    def define_thrust_matrix(T, theta, phi):
-        return sp.Matrix(
-            [
-                [T * sin(theta)],
-                [T * sin(phi)],
-                [T * sqrt(1 - sin(theta) ** 2 - sin(phi) ** 2)],
-            ]
-        )
-    return (define_thrust_matrix,)
-
-
-@app.cell(hide_code=True)
-def _(T_1, T_2, T_3, T_4, define_thrust_matrix, phi, theta):
+def _(T_1, T_2, T_3, T_4, define_vector):
     T = dict()
-    T[1] = define_thrust_matrix(T_1, theta, -phi)
-    T[2] = define_thrust_matrix(T_2, -theta, phi)
-    T[3] = define_thrust_matrix(T_3, theta, phi)
-    T[4] = define_thrust_matrix(T_4, -theta, -phi)
+    T[1] = define_vector(0, 0, T_1)
+    T[2] = define_vector(0, 0, T_2)
+    T[3] = define_vector(0, 0, T_3)
+    T[4] = define_vector(0, 0, T_4)
     T
     return (T,)
 
@@ -660,7 +720,6 @@ def _(R, T, m_c_ccw, m_c_cw, sp):
 
     for i in range(1, 4 + 1):
         temp_m = R[i].cross(T[i])
-        print(temp_m)
         if i <= 2:
             temp_m += m_c_ccw * T[i]
         else:
@@ -671,16 +730,15 @@ def _(R, T, m_c_ccw, m_c_cw, sp):
 
 
 @app.cell(hide_code=True)
-def _(Eq, M_x, M_y, M_z, equations, m_matrix, sp):
-    equations[4] = Eq(m_matrix[0], M_x)
-    equations[5] = Eq(m_matrix[1], M_y)
-    equations[6] = Eq(m_matrix[2], M_z)
+def _(Eq, M_prima, equations, m_matrix):
+    equations["Mx"] = Eq(m_matrix[0], M_prima[0])
+    equations["My"] = Eq(m_matrix[1], M_prima[1])
+    equations["Mz"] = Eq(m_matrix[2], M_prima[2])
 
-    parsed_equations = list()
-
-    for k in equations:
-        if equations.get(k) not in (True, sp.true, False, sp.false):
-            parsed_equations.append(equations[k])
+    parsed_equations = list(equations.values())
+    # for k in equations:
+    #     if equations.get(k) not in (True, sp.true, False, sp.false):
+    #         parsed_equations.append(equations[k])
     parsed_equations
     return (parsed_equations,)
 
@@ -727,10 +785,7 @@ def _(sp):
 
 @app.cell
 def _(T_1, T_2, T_3, T_4, build_symbolic_system, parsed_equations):
-    if len(parsed_equations) > 4:
-        A, B = build_symbolic_system([T_1, T_2, T_3, T_4], parsed_equations[1:5])
-    else:
-        A, B = build_symbolic_system([T_1, T_2, T_3, T_4], parsed_equations)
+    A, B = build_symbolic_system([T_1, T_2, T_3, T_4], parsed_equations)
     A
     return A, B
 
